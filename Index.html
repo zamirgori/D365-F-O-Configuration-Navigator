@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D365 Configuration Navigator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#0057FF;--blue-dim:#1A6AFF;--blue-muted:#EEF3FF;--blue-mid:#ADC4FF;
+  --bg:#F0F4F8;--bg2:#E8EDF4;--bg3:#DDE4EE;
+  --surface:#FFFFFF;--surface2:#F7F9FC;
+  --border:#D6DCE8;--border2:#C2CAD8;
+  --ink:#0D1117;--ink2:#3A4356;--ink3:#6B7591;--ink4:#9BA5BB;--ink5:#C8CED9;
+  --green:#00875A;--green-bg:#E3F5EF;
+  --amber:#B45309;--amber-bg:#FEF3C7;
+  --red:#DC2626;--red-bg:#FEE2E2;
+  --radius:6px;--radius-md:8px;--radius-lg:12px;
+  --shadow-sm:0 1px 3px rgba(13,17,23,0.06),0 1px 2px rgba(13,17,23,0.04);
+  --shadow:0 4px 12px rgba(13,17,23,0.08),0 2px 4px rgba(13,17,23,0.04);
+  --shadow-lg:0 12px 32px rgba(13,17,23,0.12),0 4px 8px rgba(13,17,23,0.06);
+  --font:'Geist',system-ui,sans-serif;
+  --mono:'Geist Mono',monospace;
+  --sidebar:220px;
+  --topbar:48px;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:var(--font)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+/* ─── TOPBAR ─── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar);
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:12px;z-index:200;
+}
+.topbar-logo{display:flex;align-items:center;gap:8px;width:var(--sidebar);flex-shrink:0}
+.logo-badge{width:22px;height:22px;background:var(--blue);border-radius:5px;display:flex;align-items:center;justify-content:center}
+.logo-badge svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2}
+.logo-name{font-size:13px;font-weight:600;color:var(--ink);letter-spacing:-0.01em}
+.topbar-breadcrumb{display:flex;align-items:center;gap:4px;flex:1;overflow:hidden}
+.bc-item{font-size:12px;color:var(--ink3);white-space:nowrap;cursor:pointer;transition:color 0.15s}
+.bc-item:hover{color:var(--ink)}
+.bc-item.active{color:var(--ink);font-weight:500}
+.bc-sep{color:var(--ink5);font-size:12px}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.topbar-search-wrap{position:relative}
+.topbar-search{
+  width:200px;height:28px;border-radius:var(--radius);border:1px solid var(--border);
+  background:var(--bg);padding:0 10px 0 28px;font-size:12px;color:var(--ink);
+  font-family:var(--font);outline:none;transition:border-color 0.15s,box-shadow 0.15s,width 0.2s;
+}
+.topbar-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,87,255,0.1);width:260px}
+.topbar-search::placeholder{color:var(--ink4)}
+.topbar-search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--ink4);pointer-events:none}
+.topbar-search-icon svg{width:14px;height:14px}
+.topbar-btn{
+  height:28px;padding:0 12px;border-radius:var(--radius);border:1px solid var(--border);
+  background:var(--surface);font-size:12px;font-weight:500;color:var(--ink2);
+  cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap;
+}
+.topbar-btn:hover{border-color:var(--border2);background:var(--surface2)}
+.topbar-btn svg{width:13px;height:13px}
+.topbar-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.topbar-btn.primary:hover{background:var(--blue-dim);border-color:var(--blue-dim)}
+
+/* ─── SIDEBAR ─── */
+.sidebar{
+  position:fixed;top:var(--topbar);left:0;bottom:0;width:var(--sidebar);
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;z-index:100;
+}
+.sidebar-section{padding:12px 8px 4px}
+.sidebar-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink4);padding:0 8px;margin-bottom:2px}
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius);
+  cursor:pointer;font-size:12.5px;color:var(--ink3);transition:all 0.12s;
+  border:none;background:none;width:100%;text-align:left;font-family:var(--font);
+}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--blue-muted);color:var(--blue);font-weight:500}
+.nav-item-icon{width:16px;height:16px;flex-shrink:0;opacity:0.6}
+.nav-item.active .nav-item-icon{opacity:1}
+.nav-item-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.nav-item-count{margin-left:auto;font-size:10px;font-weight:500;background:var(--bg2);color:var(--ink4);padding:1px 6px;border-radius:10px}
+.nav-item.active .nav-item-count{background:rgba(0,87,255,0.12);color:var(--blue)}
+.sidebar-sub{overflow:hidden;transition:max-height 0.3s ease}
+.sidebar-sub-item{
+  display:block;width:100%;text-align:left;padding:4px 8px 4px 32px;
+  border:none;background:none;cursor:pointer;font-size:11.5px;
+  color:var(--ink4);transition:color 0.12s;font-family:var(--font);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sidebar-sub-item:hover{color:var(--ink)}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 12px}
+.sidebar-footer{margin-top:auto;padding:8px}
+
+/* ─── MAIN ─── */
+.main{margin-left:var(--sidebar);margin-top:var(--topbar);min-height:calc(100vh - var(--topbar))}
+.screen{display:none}
+.screen.active{display:block;animation:fadeIn 0.25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.chapter-screen{display:none}
+.chapter-screen.active{display:flex;animation:fadeIn 0.25s ease}
+
+/* ─── PAGE HEADER ─── */
+.page-header{padding:20px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.page-header-left{}
+.page-title{font-size:20px;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1.2}
+.page-subtitle{font-size:13px;color:var(--ink3);margin-top:3px;line-height:1.5}
+.page-header-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;padding-top:2px}
+.page-content{padding:16px 24px 32px}
+
+/* ─── KPI CARDS ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;transition:box-shadow 0.15s}
+.kpi-card:hover{box-shadow:var(--shadow-sm)}
+.kpi-label{font-size:11px;font-weight:500;color:var(--ink4);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.kpi-label svg{width:12px;height:12px}
+.kpi-value{font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-0.03em;line-height:1}
+.kpi-value.blue{color:var(--blue)}
+.kpi-value.green{color:var(--green)}
+.kpi-value.amber{color:var(--amber)}
+.kpi-sub{font-size:11px;color:var(--ink4);margin-top:4px}
+.kpi-bar{height:3px;background:var(--bg2);border-radius:2px;margin-top:8px;overflow:hidden}
+.kpi-bar-fill{height:100%;background:var(--blue);border-radius:2px;transition:width 0.6s ease}
+
+/* ─── MODULE GRID ─── */
+.module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.module-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;overflow:hidden;cursor:pointer;transition:all 0.15s}
+.module-card:hover{box-shadow:var(--shadow);border-color:var(--border2);transform:translateY(-1px)}
+.module-card-header{padding:16px 18px 12px;display:flex;align-items:flex-start;gap:12px}
+.module-icon{width:36px;height:36px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.module-icon svg{width:18px;height:18px}
+.module-card-info{flex:1;min-width:0}
+.module-card-chapter{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink4);margin-bottom:3px}
+.module-card-name{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;line-height:1.2}
+.module-card-desc{padding:0 18px 14px;font-size:12px;color:var(--ink3);line-height:1.6}
+.module-card-footer{padding:10px 18px;background:var(--surface2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.module-stats{display:flex;gap:14px}
+.module-stat{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink3)}
+.module-stat-dot{width:6px;height:6px;border-radius:50%;background:var(--ink5)}
+.module-stat-dot.blue{background:var(--blue)}
+.module-stat-dot.green{background:var(--green)}
+.module-card-arrow{font-size:14px;color:var(--ink4);transition:transform 0.15s,color 0.15s}
+.module-card:hover .module-card-arrow{color:var(--blue);transform:translateX(3px)}
+
+/* ─── CHAPTER LAYOUT ─── */
+.chapter-toc{width:196px;min-width:196px;border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;background:var(--surface);position:sticky;top:0;height:calc(100vh - var(--topbar));flex-shrink:0}
+.toc-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink4);padding:0 14px;margin-bottom:6px}
+.toc-link{display:flex;align-items:center;gap:6px;padding:5px 14px;cursor:pointer;font-size:11.5px;color:var(--ink4);transition:all 0.12s;border-left:2px solid transparent}
+.toc-link:hover{color:var(--ink2);background:var(--bg);border-left-color:var(--border2)}
+.toc-link.active{color:var(--blue);background:var(--blue-muted);border-left-color:var(--blue)}
+.toc-link-num{font-size:10px;font-family:var(--mono);color:var(--ink5);flex-shrink:0;width:16px}
+.toc-link.active .toc-link-num{color:var(--blue);opacity:0.7}
+.chapter-main{flex:1;overflow-y:auto;padding:20px 24px 40px}
+
+/* ─── CHAPTER HEADER ─── */
+.chapter-header{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.chapter-header-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.chapter-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--radius);background:var(--blue-muted);color:var(--blue);font-size:11px;font-weight:600;letter-spacing:0.05em}
+.chapter-title{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1.2;margin-bottom:4px}
+.chapter-desc{font-size:13px;color:var(--ink3);line-height:1.6;max-width:640px}
+.chapter-kpis{display:flex;gap:10px;margin-top:14px}
+.chapter-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;display:flex;align-items:center;gap:8px}
+.chapter-kpi-val{font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-0.02em}
+.chapter-kpi-val.blue{color:var(--blue)}
+.chapter-kpi-val.green{color:var(--green)}
+.chapter-kpi-label{font-size:11px;color:var(--ink4)}
+
+/* ─── CONFIG TABLE/CARDS ─── */
+.config-table-header{display:grid;grid-template-columns:40px 1fr 140px 100px 80px;gap:0;padding:0 16px;margin-bottom:4px}
+.config-table-header-cell{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink4);padding:6px 0}
+.config-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px;overflow:hidden;transition:box-shadow 0.15s,border-color 0.15s}
+.config-card:hover{box-shadow:var(--shadow-sm);border-color:var(--border2)}
+.config-card.expanded{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.config-row{display:grid;grid-template-columns:40px 1fr 140px 100px 80px;gap:0;padding:0 16px;cursor:pointer;align-items:center;min-height:44px}
+.config-row-num{font-size:11px;font-family:var(--mono);color:var(--ink4);padding:10px 0}
+.config-row-title{font-size:13px;font-weight:500;color:var(--ink);padding:10px 8px 10px 0;line-height:1.3}
+.config-row-module{padding:10px 8px 10px 0}
+.config-row-status{padding:10px 8px 10px 0}
+.config-row-toggle{display:flex;align-items:center;justify-content:flex-end;padding:10px 0}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius);font-size:10px;font-weight:600;white-space:nowrap}
+.badge-mandatory{background:var(--blue-muted);color:var(--blue)}
+.badge-optional{background:var(--bg2);color:var(--ink3)}
+.badge-module{font-size:10px;font-weight:500;padding:2px 8px;border-radius:var(--radius)}
+.badge-org{background:#EDF2FF;color:#3451B2}
+.badge-finance{background:var(--green-bg);color:var(--green)}
+.badge-scm{background:var(--amber-bg);color:var(--amber)}
+.badge-inventory{background:#FDF2F8;color:#9C2B6B}
+.chevron-icon{width:14px;height:14px;color:var(--ink4);transition:transform 0.2s}
+.chevron-icon.open{transform:rotate(180deg)}
+
+.config-body{display:none;border-top:1px solid var(--border);animation:bodyIn 0.2s ease}
+.config-body.open{display:block}
+@keyframes bodyIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.config-body-inner{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0}
+.config-body-section{padding:14px 16px;border-right:1px solid var(--border)}
+.config-body-section:last-child{border-right:none}
+.config-body-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink4);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.config-body-label svg{width:11px;height:11px}
+.config-desc{font-size:12.5px;color:var(--ink2);line-height:1.65}
+.q-list,.a-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+.q-list li,.a-list li{font-size:12px;color:var(--ink3);line-height:1.55;display:flex;gap:6px;align-items:flex-start}
+.q-list li::before{content:'?';color:var(--ink5);font-size:10px;font-weight:700;flex-shrink:0;margin-top:2px;font-family:var(--mono)}
+.a-list li::before{content:'→';color:var(--blue);font-size:10px;flex-shrink:0;margin-top:2px;font-family:var(--mono)}
+.config-path-box{background:var(--bg);border-radius:var(--radius);padding:10px 12px;border:1px solid var(--border)}
+.config-path-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink4);margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.config-path-label svg{width:10px;height:10px}
+.config-path-text{font-size:11px;color:var(--ink3);line-height:1.7;font-family:var(--mono)}
+
+/* ─── LANDING ─── */
+.landing-hero{padding:28px 24px 0}
+.landing-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+.landing-hero-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--radius);background:var(--blue-muted);color:var(--blue);font-size:11px;font-weight:600;margin-bottom:8px}
+.landing-hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.landing-title{font-size:28px;font-weight:800;color:var(--ink);letter-spacing:-0.03em;line-height:1.15;max-width:520px}
+.landing-title span{color:var(--blue)}
+.landing-subtitle{font-size:14px;color:var(--ink3);line-height:1.6;max-width:480px;margin-top:8px}
+.landing-actions{display:flex;gap:8px;margin-top:16px}
+.btn-lg{height:34px;padding:0 18px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;font-family:var(--font)}
+.btn-lg:hover{border-color:var(--border2);background:var(--surface2)}
+.btn-lg.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-lg.primary:hover{background:var(--blue-dim);border-color:var(--blue-dim)}
+.btn-lg svg{width:14px;height:14px}
+.landing-meta{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+.landing-meta-item{text-align:right}
+.landing-meta-val{font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-0.03em}
+.landing-meta-label{font-size:10px;color:var(--ink4);text-transform:uppercase;letter-spacing:0.08em}
+
+/* ─── PROGRESS / VISUAL STRIP ─── */
+.module-strip{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;margin-bottom:20px;background:var(--surface)}
+.module-strip-item{flex:1;padding:14px 16px;border-right:1px solid var(--border);cursor:pointer;transition:background 0.12s}
+.module-strip-item:last-child{border-right:none}
+.module-strip-item:hover{background:var(--surface2)}
+.ms-chapter{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px}
+.ms-name{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.ms-bar{height:3px;background:var(--bg2);border-radius:2px;overflow:hidden}
+.ms-bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease}
+.ms-stats{display:flex;gap:8px;margin-top:6px}
+.ms-stat{font-size:10px;color:var(--ink4)}
+.ms-stat strong{color:var(--ink);font-weight:600}
+
+/* ─── SEARCH SCREEN ─── */
+.search-screen-wrap{padding:20px 24px}
+.search-full-wrap{position:relative;margin-bottom:20px}
+.search-full{
+  width:100%;height:40px;border-radius:var(--radius-md);border:1px solid var(--border);
+  background:var(--surface);padding:0 14px 0 40px;font-size:14px;color:var(--ink);
+  font-family:var(--font);outline:none;transition:border-color 0.15s,box-shadow 0.15s;
+}
+.search-full:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,87,255,0.1)}
+.search-full::placeholder{color:var(--ink4)}
+.search-full-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink4);pointer-events:none}
+.search-full-icon svg{width:16px;height:16px}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.filter-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink4)}
+.filter-chip{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:11.5px;color:var(--ink3);cursor:pointer;font-family:var(--font);font-weight:500;transition:all 0.12s}
+.filter-chip:hover{border-color:var(--border2);color:var(--ink)}
+.filter-chip.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.filter-sep{width:1px;height:16px;background:var(--border)}
+.results-meta{font-size:12px;color:var(--ink4);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.results-meta strong{color:var(--ink);font-weight:600}
+.search-result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:6px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;transition:all 0.12s}
+.search-result-card:hover{border-color:var(--blue);box-shadow:var(--shadow-sm)}
+.src-accent{width:3px;border-radius:2px;align-self:stretch;min-height:32px;flex-shrink:0}
+.src-body{flex:1;min-width:0}
+.src-meta{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.src-chapter{font-size:10px;color:var(--ink4);font-weight:500}
+.src-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;line-height:1.3}
+.src-desc{font-size:12px;color:var(--ink3);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical}
+.src-badges{display:flex;gap:5px;flex-shrink:0;align-self:flex-start}
+.empty-state{text-align:center;padding:60px 20px;color:var(--ink4)}
+.empty-state svg{width:28px;height:28px;margin-bottom:10px;opacity:0.4;display:block;margin:0 auto 10px}
+.empty-text{font-size:13px;color:var(--ink4)}
+
+/* ─── ABOUT ─── */
+.about-wrap{padding:20px 24px;max-width:860px}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.about-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px}
+.about-card-icon{width:28px;height:28px;border-radius:var(--radius);background:var(--blue-muted);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.about-card-icon svg{width:15px;height:15px;color:var(--blue)}
+.about-card-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px}
+.about-card-body{font-size:12.5px;color:var(--ink3);line-height:1.65}
+.about-divider{height:1px;background:var(--border);margin:20px 0}
+.notes-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.note-row{display:flex;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--ink3);line-height:1.55}
+.note-row:last-child{border-bottom:none}
+.note-num{font-size:11px;font-family:var(--mono);color:var(--ink5);flex-shrink:0;padding-top:1px;min-width:16px}
+.license-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px;margin-top:12px}
+.license-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:8px}
+.license-text{font-size:11.5px;color:var(--ink4);line-height:1.75;font-family:var(--mono)}
+
+/* ─── MOBILE TOGGLE ─── */
+.mobile-btn{display:none;position:fixed;top:10px;right:12px;z-index:300;height:28px;width:28px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);cursor:pointer;align-items:center;justify-content:center}
+.mobile-btn svg{width:14px;height:14px;color:var(--ink)}
+@media(max-width:900px){
+  :root{--sidebar:0px}
+  .sidebar{transform:translateX(-220px);width:220px;transition:transform 0.25s ease}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .mobile-btn{display:flex}
+  .topbar-logo{width:auto}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .module-grid{grid-template-columns:1fr}
+  .config-table-header{display:none}
+  .config-row{grid-template-columns:32px 1fr 80px 24px;gap:0}
+  .config-row-module,.config-row-status{display:none}
+  .config-body-inner{grid-template-columns:1fr}
+  .config-body-section{border-right:none;border-bottom:1px solid var(--border)}
+  .config-body-section:last-child{border-bottom:none}
+  .about-grid{grid-template-columns:1fr}
+  .chapter-toc{display:none}
+  .chapter-kpis{flex-wrap:wrap}
+  .module-strip{flex-direction:column}
+  .module-strip-item{border-right:none;border-bottom:1px solid var(--border)}
+  .module-strip-item:last-child{border-bottom:none}
+  .landing-hero-top{flex-direction:column}
+  .landing-meta{align-items:flex-start;flex-direction:row;gap:24px}
+}
+</style>
+</head>
+<body>
+
+<button class="mobile-btn" onclick="toggleSidebar()" aria-label="Menu">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-badge">
+      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+    </div>
+    <span class="logo-name">D365 Navigator</span>
+  </div>
+  <div class="topbar-breadcrumb" id="topBreadcrumb">
+    <span class="bc-item active" onclick="showScreen('landing')">Home</span>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-search-wrap">
+      <div class="topbar-search-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+      <input type="text" class="topbar-search" placeholder="Quick search…" onfocus="showScreen('search')" oninput="syncSearch(this.value)">
+    </div>
+    <button class="topbar-btn" onclick="showScreen('about')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      About
+    </button>
+    <button class="topbar-btn primary" onclick="showScreen('modules')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      Modules
+    </button>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <button class="nav-item" id="nav-landing" onclick="showScreen('landing')">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" id="nav-modules" onclick="showScreen('modules')">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      All Modules
+    </button>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Chapters</div>
+    <div id="sidebarChapters"></div>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Tools</div>
+    <button class="nav-item" id="nav-search" onclick="showScreen('search')">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      Search &amp; Filter
+    </button>
+    <button class="nav-item" id="nav-about" onclick="showScreen('about')">
+      <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      About
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main" id="main">
+
+  <!-- LANDING -->
+  <div class="screen active" id="screen-landing">
+    <div class="landing-hero">
+      <div class="landing-hero-top">
+        <div>
+          <div class="landing-hero-badge">v1.0 · Supply Chain Org · April 2025</div>
+          <h1 class="landing-title">D365 F&amp;O Configuration <span>Navigator</span></h1>
+          <p class="landing-subtitle">A structured, searchable reference for configuring a new Microsoft Dynamics 365 Finance &amp; Operations legal entity. 44 tasks across 4 modules.</p>
+          <div class="landing-actions">
+            <button class="btn-lg primary" onclick="showScreen('modules')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+              Browse Modules
+            </button>
+            <button class="btn-lg" onclick="showScreen('search')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              Search Tasks
+            </button>
+          </div>
+        </div>
+        <div class="landing-meta">
+          <div class="landing-meta-item"><div class="landing-meta-val">44</div><div class="landing-meta-label">Total tasks</div></div>
+          <div class="landing-meta-item"><div class="landing-meta-val" style="color:var(--blue)">36</div><div class="landing-meta-label">Mandatory</div></div>
+          <div class="landing-meta-item"><div class="landing-meta-val" style="color:var(--ink3)">8</div><div class="landing-meta-label">Optional</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Org Admin</div>
+          <div class="kpi-value blue">7</div>
+          <div class="kpi-sub">6 mandatory · 1 optional</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:86%"></div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Finance</div>
+          <div class="kpi-value green">13</div>
+          <div class="kpi-sub">13 mandatory · 0 optional</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--green)"></div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>Supply Chain</div>
+          <div class="kpi-value amber">11</div>
+          <div class="kpi-sub">8 mandatory · 3 optional</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:73%;background:var(--amber)"></div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>Inventory</div>
+          <div class="kpi-value" style="color:#9C2B6B">13</div>
+          <div class="kpi-sub">9 mandatory · 4 optional</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:69%;background:#9C2B6B"></div></div>
+        </div>
+      </div>
+      <div class="module-strip" id="landingStrip"></div>
+      <div style="font-size:12px;color:var(--ink4);margin-top:16px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);display:flex;align-items:flex-start;gap:8px">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0;margin-top:1px;color:var(--blue)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span><strong style="color:var(--ink)">Configuration sequence matters.</strong> Complete Org Administration before Finance, Finance before Supply Chain, and Supply Chain before Inventory. Dependencies flow in this order.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE OVERVIEW -->
+  <div class="screen" id="screen-modules">
+    <div class="page-header">
+      <div class="page-header-left">
+        <h2 class="page-title">All Modules</h2>
+        <p class="page-subtitle">Four configuration modules — select a chapter to begin.</p>
+      </div>
+      <div class="page-header-actions">
+        <button class="topbar-btn" onclick="showScreen('search')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Search tasks
+        </button>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="module-grid" id="moduleGrid"></div>
+    </div>
+  </div>
+
+  <!-- CHAPTER -->
+  <div class="chapter-screen" id="screen-chapter">
+    <div class="chapter-toc" id="chapterToc"></div>
+    <div class="chapter-main" id="chapterMain"></div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="screen" id="screen-search">
+    <div class="search-screen-wrap">
+      <div class="page-header" style="padding:0 0 16px">
+        <div><h2 class="page-title">Search &amp; Filter</h2><p class="page-subtitle">Find any configuration task across all modules.</p></div>
+      </div>
+      <div class="search-full-wrap">
+        <div class="search-full-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+        <input type="text" class="search-full" id="searchInput" placeholder="Search configuration tasks, D365 paths, business questions…" oninput="doSearch()">
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Module</span>
+        <button class="filter-chip active" data-filter="module" data-val="all" onclick="setFilter('module','all',this)">All</button>
+        <button class="filter-chip" data-filter="module" data-val="org" onclick="setFilter('module','org',this)">Org Admin</button>
+        <button class="filter-chip" data-filter="module" data-val="finance" onclick="setFilter('module','finance',this)">Finance</button>
+        <button class="filter-chip" data-filter="module" data-val="scm" onclick="setFilter('module','scm',this)">SCM</button>
+        <button class="filter-chip" data-filter="module" data-val="inventory" onclick="setFilter('module','inventory',this)">Inventory</button>
+        <div class="filter-sep"></div>
+        <span class="filter-label">Status</span>
+        <button class="filter-chip active" data-filter="status" data-val="all" onclick="setFilter('status','all',this)">All</button>
+        <button class="filter-chip" data-filter="status" data-val="mandatory" onclick="setFilter('status','mandatory',this)">Mandatory</button>
+        <button class="filter-chip" data-filter="status" data-val="optional" onclick="setFilter('status','optional',this)">Optional</button>
+      </div>
+      <div class="results-meta" id="searchMeta"></div>
+      <div id="searchResults"></div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="screen" id="screen-about">
+    <div class="about-wrap">
+      <div class="page-header" style="padding:0 0 0">
+        <div>
+          <h2 class="page-title">About</h2>
+          <p class="page-subtitle">D365 Configuration Navigator — Designed by Zamir Gori</p>
+        </div>
+      </div>
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+          <div class="about-card-title">Project overview</div>
+          <div class="about-card-body">D365 Configuration Navigator, a visual, narrative-driven tool envisioned and developed by Zamir Gori, is designed to simplify and humanize the complex process of configuring a new Microsoft Dynamics 365 Finance & Operations legal entity. Inspired by editorial storytelling, it transforms dense configuration checklists into an intuitive, magazine-like experience.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg></div>
+          <div class="about-card-title">Content source</div>
+          <div class="about-card-body">All 44 configuration tasks are derived from the Microsoft Dynamics 365 F&amp;O New Legal Entity Configuration Checklist (Supply Chain Organization, Version 1.0, April 2025). Sample answers reference a representative company: Contoso Supply Co.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg></div>
+          <div class="about-card-title">Design system</div>
+          <div class="about-card-body">Clinical SaaS Blueprint — cool whites and electric blue with a tight grid and data-dense layout. Geist typeface. Optimized for consultant workflows: fast search, expandable detail cards, KPI summaries, and breadcrumb navigation.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+          <div class="about-card-title">Usage notes</div>
+          <div class="about-card-body">Mandatory items are required for go-live. Optional items are best practices. All sample answers must be validated with client stakeholders. Costing methods are legally binding once transactions exist.</div>
+        </div>
+      </div>
+      <div class="about-divider"></div>
+      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:10px">Implementation sequence notes</div>
+      <div class="notes-list">
+        <div class="note-row"><div class="note-num">01</div><div>Follow the configuration sequence strictly — Org Admin → Finance → SCM → Inventory. Foundation must be complete before subsequent modules.</div></div>
+        <div class="note-row"><div class="note-num">02</div><div>All "Sample Answers" are illustrative defaults. Review and confirm with client business stakeholders during Fit-Gap Analysis workshops.</div></div>
+        <div class="note-row"><div class="note-num">03</div><div>Number sequences should be reviewed against local regulatory requirements before finalizing (consecutive invoice numbering for tax authority compliance).</div></div>
+        <div class="note-row"><div class="note-num">04</div><div>Costing methods (Standard, FIFO, Weighted Average) are legally binding once inventory transactions exist. Confirm with Finance before configuration.</div></div>
+        <div class="note-row"><div class="note-num">05</div><div>Advanced Warehouse Management (WMS) licensing must be confirmed with Microsoft before enabling location/license plate tracking.</div></div>
+        <div class="note-row"><div class="note-num">06</div><div>Security roles and data access should be configured in parallel. Data migration (COA, Item master, Vendor/Customer master) tracked separately.</div></div>
+      </div>
+      <div class="license-box">
+        <div class="license-title">MIT License</div>
+        <div class="license-text">Copyright © 2025 D365 Configuration Navigator Contributors. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const MODULES=[
+  {id:'org',label:'Org Administration',chapter:'Chapter I',color:'#0057FF',badge:'badge-org',
+   icon:'<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
+   iconBg:'#EEF3FF',barColor:'#0057FF',
+   desc:'Legal entity creation, organizational hierarchies, number sequences, currencies, units of measure, and Global Address Book configuration.',
+   intro:'The foundational chapter. Before any transaction can be posted, the legal entity must be established with its organizational structure, numbering conventions, currencies, and address configuration.'},
+  {id:'finance',label:'Finance',chapter:'Chapter II',color:'#00875A',badge:'badge-finance',
+   icon:'<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+   iconBg:'#E3F5EF',barColor:'#00875A',
+   desc:'General ledger, fiscal calendars, chart of accounts, financial dimensions, bank accounts, payment terms, tax, and posting profiles.',
+   intro:'With the organizational shell in place, Finance defines how every monetary movement is recorded and reported. All 13 tasks are mandatory for go-live.'},
+  {id:'scm',label:'Supply Chain',chapter:'Chapter III',color:'#B45309',badge:'badge-scm',
+   icon:'<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
+   iconBg:'#FEF3C7',barColor:'#B45309',
+   desc:'Procurement parameters, category hierarchies, vendor and customer setup, purchase agreements, RFQ, sales parameters, trade agreements.',
+   intro:'Connects the entity to its commercial world — vendors, customers, and workflows governing how goods and services are procured, priced, and delivered.'},
+  {id:'inventory',label:'Inventory Mgmt',chapter:'Chapter IV',color:'#9C2B6B',badge:'badge-inventory',
+   icon:'<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>',
+   iconBg:'#FDF2F8',barColor:'#9C2B6B',
+   desc:'Inventory parameters, sites/warehouses, locations, storage/tracking dimensions, item model groups, product masters, costing, journals, cycle counting.',
+   intro:'The final chapter brings physical reality into the system — warehouses, locations, costing methods, and quality inspections.'}
+];
+
+const DATA=[
+  {id:1,module:'org',area:'Create New Legal Entity',mandatory:true,desc:'Establish the foundational legal entity, setting company name, country, primary currency, and language that all other configuration depends upon.',questions:['What is the company name and legal registration?','What country/region does it operate in?','What is the primary currency?','What is the company language?'],answers:['Company name: Contoso Supply Co.','Country: United States (USA)','Primary currency: USD','Language: en-US'],config:'Organization administration > Organizations > Legal entities → Create new. Set Name, Company, Country/Region, Currency. Enter legal entity identifier (e.g., CONT). Configure primary address and contact info.'},
+  {id:2,module:'org',area:'Define Operating Units & Hierarchy',mandatory:true,desc:'Define organizational structure including business units, departments, and the hierarchy used for financial consolidation and reporting.',questions:['Does the organization have business units or departments?','Is there a need for financial reporting hierarchy?','Are there multiple warehouses or sites under one legal entity?'],answers:['Yes – three departments: Procurement, Sales, Warehouse','Financial consolidation hierarchy required','Two sites: Main Warehouse (US-01) and Distribution (US-02)'],config:'Organization administration > Organizations > Organization hierarchies. Create hierarchy of type "Retail" or "Reporting". Add Business Units and Departments as operating units. Assign purposes (Procurement, Sales, Reporting).'},
+  {id:3,module:'org',area:'Configure Number Sequences',mandatory:true,desc:'Define the numbering strategy for all key documents — purchase orders, sales orders, invoices, customers, vendors — ensuring regulatory compliance.',questions:['Should number sequences be continuous or non-continuous?','Are there any regulatory requirements for invoice numbering?','Should sequences be shared across legal entities or per-entity?'],answers:['Non-continuous for operational docs; continuous for invoices per local tax rules','Invoice sequences must be sequential per fiscal year','Sequences are per legal entity'],config:'Organization administration > Number sequences > Number sequences. Generate using the wizard. Configure sequences for: Purchase Orders, Sales Orders, Invoices, Customers, Vendors, Item IDs, Inventory Journals. Set Scope = Legal entity. Enable Continuous = Yes for invoices.'},
+  {id:4,module:'org',area:'Set Up Currencies & Exchange Rate Types',mandatory:true,desc:'Configure the accounting and reporting currencies, define additional transaction currencies, and establish exchange rate types and providers.',questions:['What is the accounting currency?','What is the reporting currency?','Which foreign currencies are used in transactions?','What exchange rate provider will be used?'],answers:['Accounting currency: USD','Reporting currency: USD (same entity)','Additional currencies: EUR, CAD, MXN','Exchange rates entered manually or via integration'],config:'Organization administration > Currencies. Verify USD is active. Add EUR, CAD, MXN. Navigate to General ledger > Currencies > Currency exchange rate types — create types: Default, Budget. Add exchange rates under General ledger > Currencies > Currency exchange rates.'},
+  {id:5,module:'org',area:'Configure Units of Measure',mandatory:true,desc:'Establish units of measure used across purchasing, sales, and inventory, including conversions between purchasing and sales UOM.',questions:['What units of measure are used in purchasing and sales?','Are unit conversions required between purchasing and sales UOM?'],answers:['Primary UOM: EA (Each). Additional: BOX, PALLET, KG, LB','Conversions: 1 BOX = 12 EA; 1 PALLET = 48 BOX'],config:'Organization administration > Setup > Units > Units. Verify standard units exist (EA, KG, LB). Create custom units (BOX, PALLET) if not present. Define unit class (Quantity, Weight). Set unit conversions under Released product or globally.'},
+  {id:6,module:'org',area:'Configure GAB Parameters & Address Setup',mandatory:true,desc:'Configure the Global Address Book to support multiple party roles and enable duplicate detection across the entity.',questions:['What address format is used?','Are there multiple contact roles needed?','Is duplicate address detection required?'],answers:['US postal address format applies','Roles needed: Vendor, Customer, Carrier, Employee','Duplicate detection enabled'],config:'Organization administration > Global address book > Global address book parameters. Enable duplicate check. Configure address formats under Organization administration > Setup > Addresses. Verify Country/region, State, County, City, ZIP/Postal codes for all operating regions.'},
+  {id:7,module:'org',area:'Set Up Working Time Calendars',mandatory:false,desc:'Define working time calendars for different operational areas, including public holidays and plant shutdowns affecting scheduling.',questions:['What are the standard working days and hours?','Are there plant shutdowns or public holidays to configure?','Are separate calendars needed for purchasing vs. manufacturing?'],answers:['Mon–Fri, 08:00–17:00 standard shift','Federal US public holidays apply','One calendar for Procurement, one for Warehouse operations'],config:'Organization administration > Setup > Calendars > Calendars. Create "Standard Business" calendar. Add working times. Add holiday exceptions (Labor Day, Thanksgiving, etc.). Assign in Warehouse setup and Procurement parameters.'},
+  {id:8,module:'finance',area:'Ledger Setup',mandatory:true,desc:'Link the chart of accounts, fiscal calendar, and currencies to the legal entity ledger — the core financial configuration step.',questions:['What is the accounting currency?','What is the reporting currency?','What is the chart of accounts to link?','What fiscal calendar applies?'],answers:['Accounting: USD; Reporting: USD','Chart of accounts: CONTOSO-COA (shared)','Fiscal calendar: Jan–Dec standard calendar'],config:'General ledger > Ledger setup > Ledger. Link: Chart of accounts, Fiscal calendar, Accounting currency, Reporting currency. Set Account type for profit/loss, balance sheet. Enable financial dimensions as required.'},
+  {id:9,module:'finance',area:'Fiscal Calendar & Periods',mandatory:true,desc:'Define the fiscal year structure, number of accounting periods, and open those periods for transaction posting.',questions:['Does the fiscal year align with the calendar year?','How many accounting periods are there (12 or 13)?','When does the fiscal year start?'],answers:['Calendar year: Jan 1 – Dec 31','12 monthly accounting periods','Fiscal year: FY2025 to start'],config:'General ledger > Fiscal calendars. Create calendar "Standard". Add fiscal years and auto-generate 12 periods. Navigate to General ledger > Ledger > Ledger and assign this calendar. Open periods via General ledger > Periods > Ledger calendar.'},
+  {id:10,module:'finance',area:'Chart of Accounts',mandatory:true,desc:'Define the account numbering scheme, account ranges by type, and whether the COA is shared or entity-specific.',questions:['Will a shared or legal entity-specific COA be used?','What account numbering scheme is required?','How many account segments are needed?'],answers:['Shared COA across legal entities','5-digit numbering: 1xxxx Assets, 2xxxx Liabilities, 4xxxx Revenue, 5xxxx COGS, 6xxxx Expenses','Main account + 3 dimensions: Department, Cost Center, Region'],config:'General ledger > Chart of accounts > Charts of accounts. Create COA "CONTOSO-COA". Add main accounts: Assets 10000–19999, Liabilities 20000–29999, Equity 30000–39999, Revenue 40000–49999, COGS 50000–59999, Expenses 60000–69999. Link COA to legal entity via Ledger.'},
+  {id:11,module:'finance',area:'Financial Dimensions',mandatory:true,desc:'Create the financial dimensions that enable management reporting and cost tracking across the organization.',questions:['What dimensions are required for management reporting?','Are dimensions entity-defined or backed by operational data?','Are dimensions mandatory on transactions?'],answers:['Dimensions: Department, Cost Center, Region','Department backed by operating unit; Cost Center and Region are custom lists','Department mandatory on P&L accounts; Cost Center optional'],config:'General ledger > Chart of accounts > Dimensions > Financial dimensions. Create dimension: Department (use "Organizational unit" entity). Create Cost Center (custom list). Create Region (custom list). Add values. Navigate to Account structures and add dimensions to relevant segments.'},
+  {id:12,module:'finance',area:'Account Structures & Rules',mandatory:true,desc:'Define valid combinations of main accounts and dimensions, restricting dimension entry to appropriate account ranges.',questions:['Which combinations of main account + dimension are valid?','Are there segments restricted to certain account ranges?'],answers:['P&L accounts require Department + Cost Center; Balance sheet accounts require no dimensions','Dimension combinations validated at entry time'],config:'General ledger > Chart of accounts > Account structures. Create structure "P&L Structure": add Main Account + Department + Cost Center segments. Create "Balance Sheet Structure". Assign structures to the Ledger. Add Advanced rules for exceptions.'},
+  {id:13,module:'finance',area:'Bank Accounts',mandatory:true,desc:'Set up the bank accounts the legal entity uses for operations and payroll, linking them to GL cash accounts.',questions:['How many bank accounts does the entity operate?','What bank reconciliation method is used?','What currency is each account held in?'],answers:['Two accounts: Operating (USD), Payroll (USD)','Manual bank reconciliation initially','Both USD accounts'],config:'Cash and bank management > Bank accounts. Create bank account: set Name, Bank account number, Routing number, Currency, Bank groups. Link to a GL main account (e.g., 10100 Cash – Checking). Enable bank statement import if electronic reconciliation is planned.'},
+  {id:14,module:'finance',area:'Payment Terms',mandatory:true,desc:'Define standard payment terms for both vendors and customers, including early payment discount arrangements.',questions:['What are the standard vendor payment terms?','What are the standard customer payment terms?','Are early payment discounts used?'],answers:['Vendors: Net 30 standard; strategic vendors Net 60','Customers: Net 30 standard; key accounts Net 45','2% 10-day early payment discount offered to vendors'],config:'Accounts payable > Payment setup > Terms of payment. Create: N30 (Net days 30), N60 (Net days 60). Create discount term D10N30 (2% if paid within 10 days). Repeat for Accounts receivable > Payment setup > Terms of payment. Link to Vendor/Customer master records.'},
+  {id:15,module:'finance',area:'Payment Methods (AP)',mandatory:true,desc:'Configure the methods used to pay vendors, including check, ACH/EFT, and wire, with positive pay file requirements.',questions:['What payment methods are used to pay vendors?','Is positive pay required?','Which bank account is used per method?'],answers:['Check and ACH EFT used; Wire for international vendors','Positive pay file required for check','All payments from Operating account'],config:'Accounts payable > Payment setup > Methods of payment. Create: CHECK (offset account = 10100), ACH (file format = NACHA), WIRE. Set Bank transaction type, Bridging account if needed. Enable Positive pay under Cash and bank management > Setup > Positive pay.'},
+  {id:16,module:'finance',area:'Payment Methods (AR)',mandatory:true,desc:'Configure the methods by which customers remit payment, including lockbox processing considerations.',questions:['How do customers pay (Check, ACH, Credit Card, Wire)?','Is lockbox processing used?'],answers:['Customers pay by Check and ACH','No lockbox initially; direct deposit to bank'],config:'Accounts receivable > Payment setup > Methods of payment. Create: CHECK, ACH, CC (credit card). Link to settlement account. Configure bank account. For credit card, enable payment connector under Accounts receivable > Setup > Credit card processors.'},
+  {id:17,module:'finance',area:'Sales Tax Setup',mandatory:true,desc:'Configure sales tax codes, groups, and settlement periods for all applicable jurisdictions, including use tax on purchases.',questions:['What tax jurisdictions apply?','Is use tax applicable on purchases?','Is tax calculated by system or managed externally?'],answers:['Federal exempt (B2B wholesale); State tax applies in CA, TX, NY','Use tax applies on taxable purchases from out-of-state vendors','Tax calculated internally in D365 initially'],config:'Tax > Indirect taxes > Sales tax. Create Sales tax codes (e.g., CA-STATE-9.25, TX-STATE-6.25). Create Sales tax groups (USA-TAXABLE, USA-EXEMPT). Create Item sales tax groups (TAXABLE, EXEMPT, USE-TAX). Create settlement periods per jurisdiction.'},
+  {id:18,module:'finance',area:'Vendor Groups & Posting Profiles',mandatory:true,desc:'Categorize vendors into groups and define the GL posting profiles that control how AP transactions hit the ledger.',questions:['What vendor categories exist?','What GL accounts are used for AP trade payable?'],answers:['Groups: PRODUCT, SERVICE, FREIGHT, INTERCO','AP Trade Payable: Account 20000; Prepayments: 11000'],config:'Accounts payable > Setup > Vendor groups. Create groups: PRODUCT, SERVICE, FREIGHT, INTERCO. Go to AP > Setup > Vendor posting profiles. Create "GENERAL" profile: set Summary account (20000), Prepayment account (11000). Assign default posting profile in AP Parameters.'},
+  {id:19,module:'finance',area:'Customer Groups & Posting Profiles',mandatory:true,desc:'Categorize customers into groups and define the GL posting profiles that control AR transaction posting.',questions:['What customer categories exist?','What GL accounts are used for AR trade receivable?'],answers:['Groups: WHOLESALE, RETAIL, GOVT, INTERCO','AR Trade Receivable: Account 12000; Bad debt reserve: 12100'],config:'Accounts receivable > Setup > Customer groups. Create groups. Navigate to AR > Setup > Customer posting profiles. Create "GENERAL" profile: set Summary account (12000), Bad debt account (12100). Assign in AR Parameters.'},
+  {id:20,module:'finance',area:'Journal Names',mandatory:true,desc:'Create the named journal templates used for manual GL entries, with approval workflows for high-value postings.',questions:['What types of manual journals are required?','Is journal approval workflow required?','Should journal voucher numbers be unique per journal?'],answers:['Journals needed: General, Accrual, Prepayment, Opening Balance','Approval workflow required for amounts > $10,000','Unique voucher numbers per journal name'],config:'General ledger > Journal setup > Journal names. Create: GENL (General Journal), ACCR (Accrual), PREPAY (Prepayment), OB (Opening Balance). Set Voucher series from number sequences. Enable Approval = Yes and link to workflow. Set Journal type appropriately.'},
+  {id:21,module:'scm',area:'Procurement Parameters',mandatory:true,desc:'Define the procurement process rules including PO confirmation requirements, 3-way matching, and purchase accrual timing.',questions:['Should purchase orders require confirmation before receipt?','Is 3-way matching required?','What is the purchase order accrual method?'],answers:['PO confirmation required before goods receipt','3-way matching mandatory for all product purchases','Purchase accrual at product receipt'],config:'Accounts payable > Setup > Accounts payable parameters. Set: Default receiving warehouse, Purchase order aging periods. Enable 3-way matching under Invoice matching. Go to Procurement and sourcing > Setup > Procurement and sourcing parameters: enable PO confirmation workflow.'},
+  {id:22,module:'scm',area:'Procurement Categories',mandatory:true,desc:'Build the procurement category hierarchy for spend classification, analytics, and GL account defaulting on non-stock purchases.',questions:['What categories of goods/services are purchased?','Are spend analytics by category required?','Should categories map to item groups or GL accounts?'],answers:['Categories: Raw Materials, Packaging, MRO, Freight, Professional Services, IT','Category-level spend reporting required','Categories map to expense GL accounts for non-stock items'],config:'Procurement and sourcing > Procurement categories. Create category hierarchy named "Procurement". Add nodes: Raw Materials > Subcategories (Chemicals, Components), Packaging, MRO, Freight, Services. Assign commodity codes. Link categories to default GL accounts.'},
+  {id:23,module:'scm',area:'Vendor Setup',mandatory:true,desc:'Configure the vendor master data structure, bank account capture for EFT, and new vendor approval workflow.',questions:['Is vendor onboarding self-service or internal?','Are vendor bank accounts required for EFT payment?','What approval workflow exists for new vendors?'],answers:['Internal vendor setup by AP team; vendor portal considered in Phase 2','Vendor bank accounts required for ACH payments','New vendor approval: Procurement Manager must approve'],config:'Accounts payable > Vendors > All vendors. Define vendor account number format in number sequences. Set default Vendor group, Payment terms, Method of payment, Currency. Configure vendor bank accounts under Vendor > Bank accounts. Set up new vendor approval workflow.'},
+  {id:24,module:'scm',area:'Purchase Agreements',mandatory:false,desc:'Configure blanket purchase agreement classifications and enable system warnings when existing agreements exist for a vendor.',questions:['Are blanket purchase agreements or volume commitments used with vendors?','Should the system enforce purchase from agreements?'],answers:['Volume commit agreements with top 5 vendors','System should warn if agreement exists when creating PO'],config:'Procurement and sourcing > Setup > Purchase agreement classification. Create classification: "Volume Commitment" (type: Product quantity commitment). Enable "Find purchase agreements" in Procurement parameters. Create agreements under Procurement and sourcing > Purchase agreements.'},
+  {id:25,module:'scm',area:'Request for Quotation (RFQ)',mandatory:false,desc:'Configure the formal RFQ process with spend thresholds, scoring criteria, and approval workflows for competitive sourcing.',questions:['Is a formal RFQ process required above a spend threshold?','Are scoring criteria used to evaluate quotes?'],answers:['RFQ required for purchases > $5,000','Scoring: Price 50%, Delivery 30%, Quality 20%'],config:'Procurement and sourcing > Setup > Request for quotation setup. Enable RFQ. Define scoring criteria. Create RFQ journal names. Set up reply deadlines and unsolicited bid handling. Configure RFQ approval workflow. Define RFQ in Procurement policies by spend threshold.'},
+  {id:26,module:'scm',area:'Charges (AP)',mandatory:false,desc:'Set up additional charge codes for inbound freight, customs duty, and handling fees with proportional auto-allocation.',questions:['What additional charges appear on purchase orders?','Should charges auto-allocate to PO lines?','Are charges posted to separate GL accounts?'],answers:['Charges: Inbound Freight, Customs Duty, Handling Fee','Auto-allocation by line value (proportional)','Freight: account 52000; Duty: 52100'],config:'Accounts payable > Charges setup > Charges code. Create: FREIGHT (Dr: 52000, Cr: Vendor), DUTY (Dr: 52100, Cr: Vendor), HANDLING. Set allocation method = Proportional. Create Auto charges under Accounts payable > Charges setup > Automatic charges.'},
+  {id:27,module:'scm',area:'Sales Parameters',mandatory:true,desc:'Configure the core sales order processing rules including credit limit enforcement, confirmation requirements, and backorder handling.',questions:['Is a sales order confirmation required before shipment?','Is a credit limit check required at order entry?','Are backorders allowed or must orders ship complete?'],answers:['Sales order confirmation required','Credit limit check: hard block at limit exceeded','Partial shipments allowed; backorders auto-created'],config:'Accounts receivable > Setup > Accounts receivable parameters. Set credit limit type = Hard blocking. Enable balance + open orders in credit limit check. Go to Sales and marketing > Setup > Sales and marketing parameters: Enable SO confirmation, set Backorder policy = Create backorder.'},
+  {id:28,module:'scm',area:'Customer Setup',mandatory:true,desc:'Configure customer master data including segments, credit limits, trade agreements, and the credit application process.',questions:['What customer segments exist?','Are customer-specific pricing and discount agreements required?','Is a credit application process required for new customers?'],answers:['Segments: Wholesale Distributors, Retail Chains, Online','Trade agreements with top 10 customers for volume pricing','Internal credit approval by Finance for new customers'],config:'Accounts receivable > Customers > All customers. Set: Customer group, Payment terms, Credit limit, Method of payment, Sales tax group, Delivery terms, Mode of delivery. Define customer hierarchy for roll-up reporting. Set price group and line/multiline discount groups.'},
+  {id:29,module:'scm',area:'Charges (AR)',mandatory:false,desc:'Configure outbound freight charges and restocking fees on sales orders, with customer group-based auto-charge rules.',questions:['What charges apply on sales orders?','Who bears the freight cost?'],answers:['Outbound Freight: customer-borne for standard orders; company-borne for key accounts','Restocking fee: 15% on returns from non-key accounts'],config:'Accounts receivable > Charges setup > Charges code. Create: FREIGHT-OUT (Dr: AR Customer, Cr: 52200 Freight Revenue), RESTOCK. Auto charges under Sales and marketing > Setup > Charges > Auto charges. Link by customer group or item.'},
+  {id:30,module:'scm',area:'Delivery Terms & Modes',mandatory:true,desc:'Configure Incoterms and transport modes that control risk transfer and logistics planning on sales and purchase orders.',questions:['What delivery/Incoterms are used in sales orders?','What transport modes are used?'],answers:['Incoterms: FOB Origin for domestic, CIF for export orders','Modes: ROAD (trucking), PARCEL (UPS/FedEx), AIR (air freight)'],config:'Inventory management > Setup > Distribution > Terms of delivery. Verify standard Incoterms exist (FOB, CIF, EXW, DDP). Add custom terms as needed. Go to Inventory management > Setup > Distribution > Modes of delivery: add ROAD, PARCEL, AIR.'},
+  {id:31,module:'scm',area:'Trade Agreements & Pricing',mandatory:true,desc:'Set up list prices, customer-specific pricing, and volume discount brackets using D365 trade agreement journals.',questions:['Is list price or customer-specific pricing used?','Are volume discount brackets required?','Are multi-line or total order discounts required?'],answers:['List price in released product; customer-specific price via trade agreements','Volume discounts: 3 qty brackets (1-99, 100-499, 500+)','No multi-line discount initially'],config:'Sales and marketing > Prices and discounts > Trade agreement journals. Create journal name "SALESPRICES". Enter price agreements by item/customer combination. Create journal for volume discounts. Activate trade agreements. Go to Accounts receivable > Setup > Prices and discounts: enable Find trade agreements.'},
+  {id:32,module:'inventory',area:'Inventory Parameters',mandatory:true,desc:'Set the foundational inventory rules including negative inventory policy, reservation method, and GL posting timing.',questions:['Is negative inventory allowed?','What is the default reservation method?','Are inventory transactions to be posted immediately or via batch?'],answers:['Negative inventory: not allowed (hard stop)','Reservation: Automatic on SO confirmation','Posting: real-time for sales and POs; batch for journals'],config:'Inventory management > Setup > Inventory and warehouse management parameters. Set: Allow negative inventory = No. Reservation = Automatic. Set Movement journal name defaults. Configure inventory posting to GL. Enable quality management if QC inspections are required.'},
+  {id:33,module:'inventory',area:'Sites & Warehouses',mandatory:true,desc:'Create the physical sites and warehouse locations, enabling Advanced WMS for bin/zone tracking at applicable sites.',questions:['How many physical sites/plants does the entity operate?','What is the warehouse structure?','Is bin-level tracking required?'],answers:['Two sites: US-01 (Main Plant, Seattle), US-02 (Distribution, Dallas)','US-01: zone + bin; US-02: basic location tracking','Bin tracking required at US-01 only'],config:'Inventory management > Setup > Inventory breakdown > Sites. Create: US-01, US-02. Navigate to Warehouses: create Main Warehouse (US-01) and Distribution Center (US-02). Enable Advanced warehouse management (WMS) for US-01. Set default receiving and shipping locations.'},
+  {id:34,module:'inventory',area:'Locations & Zones',mandatory:true,desc:'Define location types, profiles, and zones within the warehouse to support picking strategies and FEFO/FIFO fulfillment.',questions:['What location types exist?','What is the naming convention for locations?','Are locations fixed or floating for picking?'],answers:['Location types: BULK, PICK, STAGE, DOCK, QC','Naming: [Zone]-[Aisle]-[Rack]-[Bin] e.g., A-01-01-01','Fixed locations for fast-moving A-class items; floating for B/C class'],config:'Warehouse management > Setup > Warehouse > Location types. Create types. Go to Location profiles: create PICK-PROFILE (mixed items allowed, FEFO), BULK-PROFILE, QC-PROFILE. Create Zones (A, B, C). Create Locations in bulk via Excel import or location wizard.'},
+  {id:35,module:'inventory',area:'Storage Dimension Groups',mandatory:true,desc:'Define how inventory is tracked dimensionally — by site, warehouse, location, and license plate — and assign to products.',questions:['Is inventory tracked at Site, Warehouse, Location, and/or License plate level?','Are bin-level transactions required?'],answers:['Standard tracking: Site + Warehouse + Location for all items','License plate tracking required for WMS-managed items at US-01'],config:'Inventory management > Setup > Dimensions > Storage dimension groups. Create: "SITE-WH-LOC" (active: Site, Warehouse, Location — all mandatory). Create "SITE-WH-LOC-LP" for WMS items (add License plate). Assign to products at item creation.'},
+  {id:36,module:'inventory',area:'Tracking Dimension Groups',mandatory:true,desc:'Configure batch and serial number tracking rules for raw materials, semi-finished goods, and high-value finished goods.',questions:['Are serial numbers required for any product category?','Are lot/batch numbers required?'],answers:['Batch tracking required for: Raw Materials, Semi-finished Goods','Serial tracking required for: High-value Finished Goods','General non-tracked items: no serial/batch'],config:'Inventory management > Setup > Dimensions > Tracking dimension groups. Create: NONE (no batch/serial), BATCH (Batch number active, mandatory on receipt), SERIAL (Serial number active). Assign BATCH to raw material item model groups. Assign SERIAL to serialized finished goods.'},
+  {id:37,module:'inventory',area:'Item Model Groups',mandatory:true,desc:'Define costing methods per product type and configure physical/financial inventory rules including negative inventory blocking.',questions:['What inventory costing method is required?','Is the costing method uniform across all product types?','Is physical negative inventory blocked?'],answers:['Finished Goods: Standard Cost. Raw Materials: FIFO. Packaging: Weighted Average','Physical negative inventory blocked for all groups','Stocked product = financial inventory active'],config:'Inventory management > Setup > Inventory > Item model groups. Create: STDCOST (Standard cost, stocked = Yes), FIFO-RAW (FIFO, stocked = Yes), WA-PKG (Weighted average, stocked = Yes), NONSTOCK (Non-stocked services). Set Physical negative and Financial negative inventory flags.'},
+  {id:38,module:'inventory',area:'Item Groups',mandatory:true,desc:'Create inventory item groups to segregate products with distinct GL accounts for inventory assets, COGS, and variance postings.',questions:['What product categories need separate GL inventory accounts?','How should COGS and inventory variance accounts be structured?'],answers:['Groups: RAWMAT, FINGOODS, PACKAGING, SEMIFIN, SPARE-PARTS','Each group has distinct inventory GL account and COGS account'],config:'Inventory management > Setup > Inventory > Item groups. Create groups. Navigate to Inventory management > Setup > Posting. For each item group, set: Inventory (asset account 13000), COGS (50000), Purchase expenditure (51000), Sales revenue (40000), Inventory variance (57000).'},
+  {id:39,module:'inventory',area:'Product Masters & Released Products',mandatory:true,desc:'Create product masters with variant dimensions, and release products to the legal entity with all inventory and dimension group assignments.',questions:['Is a product category hierarchy used for reporting?','Are product variants required?','How are items identified?'],answers:['Retail product hierarchy: Category > Subcategory > Item','Variants required for apparel items (size, color); not for industrial items','Internal item number (system-generated) + cross-reference to vendor/customer part numbers'],config:'Product information management > Products > Product masters. Create product masters with product type = Item. Set Product dimension groups for variant items. Go to Released products per legal entity: set Item model group, Item group, Storage dimension group, Tracking dimension group, Unit of measure.'},
+  {id:40,module:'inventory',area:'Inventory Costing & Closing',mandatory:true,desc:'Configure the monthly inventory close process, standard cost activation, and revaluation procedures for mid-year cost changes.',questions:['When is the standard cost activated for new items?','How frequently is inventory close/recalculation run?','Is inventory revaluation required on standard cost update?'],answers:['Standard costs activated at period start after cost roll-up','Inventory close run monthly on last day of accounting period','Revaluation run when standard cost changes mid-year'],config:'Inventory management > Periodic tasks > Closing and adjustment. Schedule monthly inventory close after period-end. For Standard cost items: set cost versions under Cost management > Predefined cost versions. Activate costs. Use Costing version comparison to audit changes.'},
+  {id:41,module:'inventory',area:'Inventory Journals',mandatory:true,desc:'Create the named inventory journals for movement adjustments, transfers, cycle counts, and profit/loss entries, with approval workflows.',questions:['What types of inventory adjustments are required?','Are movement journals and counting journals needed?','Is a journal approval workflow required?'],answers:['Journals needed: Movement, Transfer, Counting (cycle count), Profit/Loss, BOM','All journals required; counting journal auto-generated by cycle count system','Approval required for movement journals > $500 inventory value'],config:'Inventory management > Setup > Journal names > Inventory. Create: MOV (Movement journal), TRANSFER, COUNT (Counting), P&L (Profit and Loss). Assign number sequences. Enable workflow on MOV journal linked to inventory manager approval. Assign default warehouse offset accounts.'},
+  {id:42,module:'inventory',area:'Cycle Counting',mandatory:false,desc:'Configure system-guided cycle counting plans differentiated by ABC classification, with automatic work generation for warehouse mobile devices.',questions:['How frequently are A/B/C class items counted?','Is system-guided cycle counting or paper-based used?','Are locations or items the primary cycle count driver?'],answers:['A-class: weekly, B-class: monthly, C-class: quarterly','System-guided via D365 WMS / mobile device','Item-driven cycle count plans by ABC class'],config:'Inventory management > Setup > Inventory > Cycle counting. Create cycle count groups: CYC-A (days between: 7), CYC-B (30), CYC-C (90). Assign cycle count group to items via ABC classification. Go to Warehouse management > Cycle counting > Cycle count plans: create plans per group. Schedule automatic work generation.'},
+  {id:43,module:'inventory',area:'Quality Management',mandatory:false,desc:'Configure quality inspection associations for incoming raw materials, defining test groups, acceptable criteria, and non-conformance dispositions.',questions:['Is incoming inspection required for all purchased items?','What quality tests are performed?','Are certificates of conformance required from vendors?'],answers:['QC inspection required for: Raw Materials and regulated components (not packaging)','Tests: Visual inspection (pass/fail), Dimensional check, COA review','COA required from qualified vendors list'],config:'Inventory management > Setup > Quality control > Quality associations. Create association: Reference type = Purchase order, Item code = Group (Raw Materials). Link to Test group. Enable Quality management in Inventory parameters. Configure Non-conformance types and Dispositions (Accept, Reject, Scrap).'},
+  {id:44,module:'inventory',area:'ABC Classification',mandatory:false,desc:'Run ABC inventory classification by COGS value to drive cycle counting frequency and replenishment strategy differentiation.',questions:['On what basis is ABC classification performed?','How frequently is classification recalculated?','Are classification results used in replenishment and cycle counting?'],answers:['Classification by annual COGS value: A = top 20% items, B = next 30%, C = remaining','Recalculated quarterly','Used in cycle count frequency and reorder point strategy'],config:'Inventory management > Periodic tasks > ABC classification. Set criteria: Value (COGS), periods (12 months). Run classification. Review results. Update cycle count group assignments. Optionally use classification in Master planning coverage groups for reorder point differentiation.'}
+];
+
+let activeScreen='landing',activeModule=null,filters={module:'all',status:'all'};
+
+function getM(id){return MODULES.find(m=>m.id===id)}
+
+function setBreadcrumb(parts){
+  const bc=document.getElementById('topBreadcrumb');
+  bc.innerHTML=parts.map((p,i)=>{
+    const isLast=i===parts.length-1;
+    return `<span class="bc-item${isLast?' active':''}" ${p.onclick?`onclick="${p.onclick}"`:''} style="${!isLast?'cursor:pointer':''}">${p.label}</span>${!isLast?'<span class="bc-sep">›</span>':''}`;
+  }).join('');
+}
+
+function showScreen(name,moduleId){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const ch=document.getElementById('screen-chapter');
+  ch.classList.remove('active');ch.style.display='none';
+  if(name==='chapter'){
+    activeModule=moduleId;
+    renderChapter(moduleId);
+    ch.style.display='flex';
+    requestAnimationFrame(()=>ch.classList.add('active'));
+    const m=getM(moduleId);
+    setBreadcrumb([{label:'Home',onclick:"showScreen('landing')"},{label:'Modules',onclick:"showScreen('modules')"},{label:m.label}]);
+  }else{
+    const el=document.getElementById('screen-'+name);
+    if(el)el.classList.add('active');
+    const crumbs={landing:[{label:'Dashboard'}],modules:[{label:'Home',onclick:"showScreen('landing')"},{label:'All Modules'}],search:[{label:'Home',onclick:"showScreen('landing')"},{label:'Search & Filter'}],about:[{label:'Home',onclick:"showScreen('landing')"},{label:'About'}]};
+    setBreadcrumb(crumbs[name]||[{label:name}]);
+    if(name==='search')doSearch();
+  }
+  activeScreen=name;
+  updateNav();
+  document.getElementById('main').scrollTop=0;
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function updateNav(){
+  ['landing','modules','search','about'].forEach(id=>{
+    const el=document.getElementById('nav-'+id);
+    if(el)el.classList.toggle('active',activeScreen===id||(id==='landing'&&activeScreen==='landing'));
+  });
+  document.querySelectorAll('[data-nav-module]').forEach(b=>{
+    b.classList.toggle('active',activeScreen==='chapter'&&b.dataset.navModule===activeModule);
+  });
+}
+
+function buildSidebar(){
+  const c=document.getElementById('sidebarChapters');
+  c.innerHTML=MODULES.map(m=>{
+    const items=DATA.filter(d=>d.module===m.id);
+    return `<button class="nav-item" data-nav-module="${m.id}" onclick="showScreen('chapter','${m.id}')">
+      <span style="width:8px;height:8px;border-radius:50%;background:${m.color};flex-shrink:0"></span>
+      ${m.label}
+      <span class="nav-item-count">${items.length}</span>
+    </button>
+    <div class="sidebar-sub" id="sub-${m.id}">
+      ${items.map(d=>`<button class="sidebar-sub-item" onclick="showScreen('chapter','${m.id}');scrollTo(${d.id})">${d.area}</button>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function buildLandingStrip(){
+  const el=document.getElementById('landingStrip');
+  if(!el)return;
+  el.innerHTML=MODULES.map(m=>{
+    const items=DATA.filter(d=>d.module===m.id);
+    const mand=items.filter(d=>d.mandatory).length;
+    const pct=Math.round(mand/items.length*100);
+    return `<div class="module-strip-item" onclick="showScreen('chapter','${m.id}')">
+      <div class="ms-chapter" style="color:${m.color}">${m.chapter}</div>
+      <div class="ms-name">${m.label}</div>
+      <div class="ms-bar"><div class="ms-bar-fill" style="width:${pct}%;background:${m.color}"></div></div>
+      <div class="ms-stats"><span class="ms-stat"><strong>${items.length}</strong> tasks</span><span class="ms-stat"><strong>${mand}</strong> mandatory</span></div>
+    </div>`;
+  }).join('');
+}
+
+function buildModuleGrid(){
+  document.getElementById('moduleGrid').innerHTML=MODULES.map(m=>{
+    const items=DATA.filter(d=>d.module===m.id);
+    const mand=items.filter(d=>d.mandatory).length;
+    const opt=items.length-mand;
+    return `<div class="module-card" onclick="showScreen('chapter','${m.id}')">
+      <div class="module-card-header">
+        <div class="module-icon" style="background:${m.iconBg}">${m.icon.replace('stroke="currentColor"',`stroke="${m.color}"`)}</div>
+        <div class="module-card-info">
+          <div class="module-card-chapter">${m.chapter}</div>
+          <div class="module-card-name">${m.label}</div>
+        </div>
+      </div>
+      <div class="module-card-desc">${m.desc}</div>
+      <div class="module-card-footer">
+        <div class="module-stats">
+          <div class="module-stat"><span class="module-stat-dot blue"></span><span>${mand} mandatory</span></div>
+          <div class="module-stat"><span class="module-stat-dot"></span><span>${opt} optional</span></div>
+        </div>
+        <div class="module-card-arrow">→</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderChapter(moduleId){
+  const m=getM(moduleId);
+  const items=DATA.filter(d=>d.module===moduleId);
+  const mand=items.filter(d=>d.mandatory).length;
+  // TOC
+  document.getElementById('chapterToc').innerHTML=`
+    <div style="padding:0 14px 12px;border-bottom:1px solid var(--border);margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${m.color};flex-shrink:0"></span>
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:${m.color}">${m.chapter}</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--ink)">${m.label}</div>
+    </div>
+    <div class="toc-section-label">Configuration tasks</div>
+    ${items.map(d=>`<div class="toc-link" onclick="scrollTo(${d.id})">
+      <span class="toc-link-num">${String(d.id).padStart(2,'0')}</span>
+      <span style="font-size:11px;line-height:1.4">${d.area}</span>
+    </div>`).join('')}`;
+  // Main
+  document.getElementById('chapterMain').innerHTML=`
+    <div class="chapter-header">
+      <div class="chapter-header-top">
+        <div class="chapter-badge" style="background:${m.iconBg};color:${m.color}">${m.chapter} · ${m.label}</div>
+        <div style="display:flex;gap:6px">
+          <button class="topbar-btn" onclick="showScreen('modules')">← All modules</button>
+        </div>
+      </div>
+      <div class="chapter-title">${m.label}</div>
+      <div class="chapter-desc">${m.intro}</div>
+      <div class="chapter-kpis">
+        <div class="chapter-kpi"><div class="chapter-kpi-val blue">${items.length}</div><div class="chapter-kpi-label">Total tasks</div></div>
+        <div class="chapter-kpi"><div class="chapter-kpi-val green">${mand}</div><div class="chapter-kpi-label">Mandatory</div></div>
+        <div class="chapter-kpi"><div class="chapter-kpi-val" style="color:var(--ink3)">${items.length-mand}</div><div class="chapter-kpi-label">Optional</div></div>
+      </div>
+    </div>
+    <div class="config-table-header">
+      <div class="config-table-header-cell">#</div>
+      <div class="config-table-header-cell">Configuration task</div>
+      <div class="config-table-header-cell">Module</div>
+      <div class="config-table-header-cell">Status</div>
+      <div class="config-table-header-cell"></div>
+    </div>
+    ${items.map(d=>`
+      <div class="config-card" id="card-${d.id}">
+        <div class="config-row" onclick="toggle(${d.id})">
+          <div class="config-row-num">${String(d.id).padStart(2,'0')}</div>
+          <div class="config-row-title">${d.area}</div>
+          <div class="config-row-module"><span class="badge badge-module ${m.badge}">${m.label}</span></div>
+          <div class="config-row-status"><span class="badge ${d.mandatory?'badge-mandatory':'badge-optional'}">${d.mandatory?'Mandatory':'Optional'}</span></div>
+          <div class="config-row-toggle"><svg class="chevron-icon" id="chev-${d.id}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
+        </div>
+        <div class="config-body" id="body-${d.id}">
+          <div class="config-body-inner">
+            <div class="config-body-section">
+              <div class="config-body-label"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Description</div>
+              <div class="config-desc">${d.desc}</div>
+            </div>
+            <div class="config-body-section">
+              <div class="config-body-label"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Business questions → answers
+              </div>
+              <ul class="q-list" style="margin-bottom:10px">${d.questions.map(q=>`<li><span>${q}</span></li>`).join('')}</ul>
+              <ul class="a-list">${d.answers.map(a=>`<li><span>${a}</span></li>`).join('')}</ul>
+            </div>
+            <div class="config-body-section">
+              <div class="config-body-label"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>D365 F&O config path</div>
+              <div class="config-path-box">
+                <div class="config-path-label"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Navigation path</div>
+                <div class="config-path-text">${d.config}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('')}`;
+  // Update sub-nav
+  document.querySelectorAll('.sidebar-sub').forEach(s=>s.style.maxHeight='0');
+  const sub=document.getElementById('sub-'+moduleId);
+  if(sub)sub.style.maxHeight=sub.scrollHeight+'px';
+}
+
+function toggle(id){
+  const body=document.getElementById('body-'+id);
+  const chev=document.getElementById('chev-'+id);
+  const card=document.getElementById('card-'+id);
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  chev.classList.toggle('open',!open);
+  card.classList.toggle('expanded',!open);
+}
+
+function scrollTo(id){
+  setTimeout(()=>{
+    const el=document.getElementById('card-'+id);
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },100);
+}
+
+function doSearch(){
+  const q=(document.getElementById('searchInput')?.value||'').toLowerCase().trim();
+  const results=DATA.filter(d=>{
+    if(filters.module!=='all'&&d.module!==filters.module)return false;
+    if(filters.status==='mandatory'&&!d.mandatory)return false;
+    if(filters.status==='optional'&&d.mandatory)return false;
+    if(!q)return true;
+    return d.area.toLowerCase().includes(q)||d.desc.toLowerCase().includes(q)||d.config.toLowerCase().includes(q)||d.answers.some(a=>a.toLowerCase().includes(q))||d.questions.some(q2=>q2.toLowerCase().includes(q));
+  });
+  const meta=document.getElementById('searchMeta');
+  if(meta)meta.innerHTML=`<strong>${results.length}</strong> result${results.length!==1?'s':''} found${q?` for "<strong>${q}</strong>"`:''}`;
+  const container=document.getElementById('searchResults');
+  if(!container)return;
+  if(results.length===0){
+    container.innerHTML=`<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><div class="empty-text">No configuration items match your search.</div></div>`;
+    return;
+  }
+  container.innerHTML=results.map(d=>{
+    const m=getM(d.module);
+    return `<div class="search-result-card" onclick="showScreen('chapter','${d.module}');scrollTo(${d.id})">
+      <div class="src-accent" style="background:${m.color}"></div>
+      <div class="src-body">
+        <div class="src-meta">
+          <span class="badge badge-module ${m.badge}">${m.label}</span>
+          <span class="src-chapter">${m.chapter} · #${String(d.id).padStart(2,'0')}</span>
+        </div>
+        <div class="src-title">${d.area}</div>
+        <div class="src-desc">${d.desc}</div>
+      </div>
+      <div class="src-badges">
+        <span class="badge ${d.mandatory?'badge-mandatory':'badge-optional'}">${d.mandatory?'Mandatory':'Optional'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(type,val,btn){
+  filters[type]=val;
+  document.querySelectorAll(`.filter-chip[data-filter="${type}"]`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  doSearch();
+}
+
+function syncSearch(val){
+  const si=document.getElementById('searchInput');
+  if(si)si.value=val;
+  doSearch();
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+buildSidebar();
+buildLandingStrip();
+buildModuleGrid();
+doSearch();
+</script>
+</body>
+</html>
